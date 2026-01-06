@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная - Мониторинг лекарств{% endblock %}
+
+{% block content %}
+<!-- Герой-секция -->
+<div class="row align-items-center mb-5">
+    <div class="col-lg-6">
+        <h1 class="display-5 fw-bold mb-3">
+            Нашли <span class="text-primary">нужное</span> лекарство?
+        </h1>
+        <p class="lead mb-4">
+            PharmaMonitor отслеживает наличие и цены препаратов в аптечных сетях, 
+            находит аналоги и помогает сэкономить время и деньги.
+        </p>
+        <div class="d-grid gap-2 d-md-flex">
+            <a href="{% url 'drugs:drug_list' %}" class="btn btn-primary btn-lg px-4 me-md-2">
+                <i class="bi bi-capsule"></i> Все препараты
+            </a>
+            <a href="{% url 'drugs:drug_search' %}" class="btn btn-outline-primary btn-lg px-4">
+                <i class="bi bi-search"></i> Поиск
+            </a>
+        </div>
+    </div>
+    <div class="col-lg-6 text-center">
+        <div class="p-4 bg-light rounded-3">
+            <h4 class="text-primary mb-3">🚀 Демо-версия</h4>
+            <div class="row text-center">
+                <div class="col-4">
+                    <h3 class="text-success">{{ total_drugs|default:"3" }}+</h3>
+                    <small>препаратов</small>
+                </div>
+                <div class="col-4">
+                    <h3 class="text-info">{{ pharmacies_count|default:"5" }}+</h3>
+                    <small>аптек</small>
+                </div>
+                <div class="col-4">
+                    <h3 class="text-warning">24/7</h3>
+                    <small>мониторинг</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Популярные препараты -->
+<div class="mb-5">
+    <h2 class="mb-4"><i class="bi bi-fire text-danger"></i> Популярные препараты</h2>
+    
+    <div class="row">
+        {% for drug in featured_drugs %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title">{{ drug.trade_name }}</h5>
+                        {% if drug.lowest_price %}
+                        <span class="badge bg-success fs-6">{{ drug.lowest_price }} ₽</span>
+                        {% endif %}
+                    </div>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ drug.mnn }}</h6>
+                    
+                    <div class="mb-3">
+                        <span class="badge bg-info">{{ drug.form }}</span>
+                        <span class="badge bg-secondary">{{ drug.dosage }}</span>
+                    </div>
+                    
+                    <p class="card-text text-muted small">
+                        <i class="bi bi-building"></i> {{ drug.manufacturer }}
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'drugs:drug_detail' drug.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-info-circle"></i> Подробнее
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Как это работает -->
+<div class="card">
+    <div class="card-body">
+        <h3 class="card-title mb-4"><i class="bi bi-question-circle"></i> Как это работает?</h3>
+        <div class="row text-center">
+            <div class="col-md-3 mb-3">
+                <div class="p-3">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 60px; height: 60px;">
+                        <i class="bi bi-search fs-4"></i>
+                    </div>
+                    <h5>Ищите</h5>
+                    <p class="text-muted small">Введите название препарата</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="p-3">
+                    <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 60px; height: 60px;">
+                        <i class="bi bi-shop fs-4"></i>
+                    </div>
+                    <h5>Находите</h5>
+                    <p class="text-muted small">Смотрите наличие в аптеках</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="p-3">
+                    <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 60px; height: 60px;">
+                        <i class="bi bi-arrow-left-right fs-4"></i>
+                    </div>
+                    <h5>Сравнивайте</h5>
+                    <p class="text-muted small">Находите аналоги и лучшие цены</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="p-3">
+                    <div class="bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 60px; height: 60px;">
+                        <i class="bi bi-bell fs-4"></i>
+                    </div>
+                    <h5>Уведомления</h5>
+                    <p class="text-muted small">Получайте оповещения</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

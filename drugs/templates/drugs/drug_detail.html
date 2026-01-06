@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ drug.trade_name }} - PharmaMonitor{% endblock %}
+
+{% block content %}
+<!-- Хлебные крошки -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'drugs:drug_list' %}">Препараты</a></li>
+        <li class="breadcrumb-item active">{{ drug.trade_name }}</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <!-- Основная информация -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-capsule"></i> {{ drug.trade_name }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5 class="text-muted">{{ drug.mnn }} (МНН)</h5>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <p><strong>Форма выпуска:</strong><br>
+                                <span class="badge bg-info">{{ drug.form }}</span></p>
+                                
+                                <p><strong>Дозировка:</strong><br>
+                                <span class="badge bg-secondary">{{ drug.dosage }}</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Производитель:</strong><br>
+                                {{ drug.manufacturer }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5>Ценовой диапазон</h5>
+                                {% if drug.lowest_price %}
+                                <h2 class="text-success my-3">{{ drug.lowest_price }} ₽</h2>
+                                <p class="text-muted small">
+                                    {% if drug.average_price %}
+                                    Средняя: {{ drug.average_price }} ₽
+                                    {% endif %}
+                                </p>
+                                {% else %}
+                                <h4 class="text-danger my-3">Нет данных</h4>
+                                <p class="text-muted">Информация о ценах отсутствует</p>
+                                {% endif %}
+                                
+                                <div class="mt-3">
+                                    <button class="btn btn-primary w-100 mb-2" onclick="alert('Функция уведомлений в разработке')">
+                                        <i class="bi bi-bell"></i> Уведомить о наличии
+                                    </button>
+                                    <a href="{% url 'drugs:drug_search' %}?mnn={{ drug.mnn }}" class="btn btn-outline-primary w-100">
+                                        <i class="bi bi-arrow-left-right"></i> Найти аналоги
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Наличие в аптеках -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-shop"></i> Наличие в аптеках
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if availabilities %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Аптека</th>
+                                <th>Адрес</th>
+                                <th>Цена</th>
+                                <th>Количество</th>
+                                <th>Обновлено</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for availability in availabilities %}
+                            <tr>
+                                <td>
+                                    <strong>{{ availability.pharmacy.name }}</strong><br>
+                                    <small class="text-muted">{{ availability.pharmacy.network }}</small>
+                                </td>
+                                <td>
+                                    <small>{{ availability.pharmacy.address }}</small><br>
+                                    <small class="text-muted">{{ availability.pharmacy.city }}</small>
+                                </td>
+                                <td class="fw-bold {% if availability.quantity > 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {{ availability.price }} ₽
+                                </td>
+                                <td>
+                                    {% if availability.quantity > 10 %}
+                                    <span class="badge bg-success">Много</span>
+                                    {% elif availability.quantity > 0 %}
+                                    <span class="badge bg-warning">Мало</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Нет</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small>{{ availability.last_updated|date:"d.m.Y H:i" }}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-shop text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="text-muted mt-3">Нет информации о наличии</h5>
+                    <p class="text-muted">Данные обновляются ежечасно</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Боковая панель -->
+    <div class="col-lg-4">
+        <!-- Аналоги -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-arrow-left-right"></i> Аналоги
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if analogues %}
+                <div class="list-group">
+                    {% for analogue in analogues %}
+                    <a href="{% url 'drugs:drug_detail' analogue.id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ analogue.trade_name }}</h6>
+                            {% if analogue.lowest_price %}
+                            <small class="text-success">{{ analogue.lowest_price }} ₽</small>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted">{{ analogue.mnn }}</small>
+                        <div class="mt-2">
+                            <span class="badge bg-info">{{ analogue.form }}</span>
+                            <span class="badge bg-secondary">{{ analogue.dosage }}</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <i class="bi bi-arrow-left-right text-muted" style="font-size: 2rem;"></i>
+                    <p class="text-muted mt-2">Аналоги не найдены</p>
+                    <a href="{% url 'drugs:drug_search' %}?mnn={{ drug.mnn }}" class="btn btn-sm btn-outline-primary">
+                        Поиск аналогов
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Быстрые действия -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Быстрые действия</h5>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="bi bi-printer"></i> Распечатать
+                    </button>
+                    <button class="btn btn-outline-success" onclick="shareDrug()">
+                        <i class="bi bi-share"></i> Поделиться
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function shareDrug() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ drug.trade_name }}',
+            text: 'Посмотрите информацию о препарате {{ drug.trade_name }}',
+            url: window.location.href
+        });
+    } else {
+        alert('Скопируйте ссылку: ' + window.location.href);
+    }
+}
+</script>
+{% endblock %}

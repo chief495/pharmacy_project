@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Список препаратов - PharmaMonitor{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-capsule text-primary"></i> Каталог препаратов</h1>
+    <a href="{% url 'drugs:drug_search' %}" class="btn btn-primary">
+        <i class="bi bi-search"></i> Расширенный поиск
+    </a>
+</div>
+
+<!-- Фильтры -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" name="q" 
+                           placeholder="Поиск по названию или МНН..." 
+                           value="{{ query|default:'' }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-funnel"></i> Найти
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Статистика -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="alert alert-info d-flex align-items-center">
+            <i class="bi bi-capsule me-3 fs-4"></i>
+            <div>
+                <strong>Всего препаратов:</strong><br>
+                {{ total_drugs|default:"3" }}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="alert alert-success d-flex align-items-center">
+            <i class="bi bi-check-circle me-3 fs-4"></i>
+            <div>
+                <strong>Доступно сейчас:</strong><br>
+                {{ available_drugs|default:"3" }}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="alert alert-warning d-flex align-items-center">
+            <i class="bi bi-currency-exchange me-3 fs-4"></i>
+            <div>
+                <strong>Средняя цена:</strong><br>
+                {% if drugs and drugs.0.lowest_price %}
+                    {{ drugs.0.lowest_price }} ₽
+                {% else %}
+                    —
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Список препаратов -->
+{% if drugs %}
+<div class="row">
+    {% for drug in drugs %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 class="card-title">{{ drug.trade_name }}</h5>
+                    {% if drug.lowest_price %}
+                    <span class="badge bg-success fs-6">{{ drug.lowest_price }} ₽</span>
+                    {% else %}
+                    <span class="badge bg-danger fs-6">Нет в наличии</span>
+                    {% endif %}
+                </div>
+                
+                <h6 class="card-subtitle mb-2 text-muted">{{ drug.mnn }}</h6>
+                
+                <div class="mb-3">
+                    <span class="badge bg-info">{{ drug.form }}</span>
+                    <span class="badge bg-secondary">{{ drug.dosage }}</span>
+                </div>
+                
+                <p class="card-text text-muted small">
+                    <i class="bi bi-building"></i> {{ drug.manufacturer }}
+                </p>
+                
+                {% if drug.description %}
+                <p class="card-text small">{{ drug.description|truncatechars:100 }}</p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'drugs:drug_detail' drug.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-info-circle"></i> Подробнее
+                    </a>
+                    <a href="{% url 'drugs:drug_search' %}?mnn={{ drug.mnn }}" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-arrow-left-right"></i> Аналоги
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <div class="mb-4">
+        <i class="bi bi-capsule text-muted" style="font-size: 4rem;"></i>
+    </div>
+    <h3 class="text-muted mb-3">Препараты не найдены</h3>
+    <p class="text-muted mb-4">
+        {% if query %}
+        По запросу "{{ query }}" ничего не найдено.
+        {% else %}
+        В базе данных пока нет препаратов.
+        {% endif %}
+    </p>
+    <a href="{% url 'drugs:drug_list' %}" class="btn btn-primary">
+        <i class="bi bi-arrow-clockwise"></i> Показать все
+    </a>
+</div>
+{% endif %}
+{% endblock %}
