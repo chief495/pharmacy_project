@@ -54,10 +54,10 @@
                                     <small class="text-muted">{{ drug.mnn }}</small>
                                 </div>
                                 <div class="text-end">
-                                    {% if drug.lowest_price %}
-                                    <h5 class="text-success mb-0">{{ drug.lowest_price }} ₽</h5>
+                                    {% if drug.min_price %}
+                                    <h5 class="text-success mb-0">{{ drug.min_price|floatformat:2 }} ₽</h5>
                                     {% else %}
-                                    <span class="text-danger">Нет в наличии</span>
+                                    <span class="text-muted">Нет в наличии</span>
                                     {% endif %}
                                 </div>
                             </div>

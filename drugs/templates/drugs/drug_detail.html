@@ -45,11 +45,11 @@
                         <div class="card bg-light">
                             <div class="card-body text-center">
                                 <h5>Ценовой диапазон</h5>
-                                {% if drug.lowest_price %}
-                                <h2 class="text-success my-3">{{ drug.lowest_price }} ₽</h2>
+                                {% if drug.min_price %}
+                                <h2 class="text-success my-3">{{ drug.min_price }} ₽</h2>
                                 <p class="text-muted small">
-                                    {% if drug.average_price %}
-                                    Средняя: {{ drug.average_price }} ₽
+                                    {% if drug.avg_price %}
+                                    Средняя: {{ drug.avg_price|floatformat:2 }} ₽
                                     {% endif %}
                                 </p>
                                 {% else %}
@@ -58,9 +58,21 @@
                                 {% endif %}
                                 
                                 <div class="mt-3">
-                                    <button class="btn btn-primary w-100 mb-2" onclick="alert('Функция уведомлений в разработке')">
-                                        <i class="bi bi-bell"></i> Уведомить о наличии
-                                    </button>
+                                    {% if user.is_authenticated %}
+                                        {% if user_subscription %}
+                                            <a href="{% url 'drugs:edit_subscription' user_subscription.id %}" class="btn btn-success w-100 mb-2">
+                                                <i class="bi bi-bell-fill"></i> Редактировать подписку
+                                            </a>
+                                        {% else %}
+                                            <a href="{% url 'drugs:subscribe_drug' drug.id %}" class="btn btn-primary w-100 mb-2">
+                                                <i class="bi bi-bell"></i> Подписаться на уведомления
+                                            </a>
+                                        {% endif %}
+                                    {% else %}
+                                        <a href="{% url 'login' %}" class="btn btn-outline-primary w-100 mb-2">
+                                            <i class="bi bi-box-arrow-in-right"></i> Войдите для подписки
+                                        </a>
+                                    {% endif %}
                                     <a href="{% url 'drugs:drug_search' %}?mnn={{ drug.mnn }}" class="btn btn-outline-primary w-100">
                                         <i class="bi bi-arrow-left-right"></i> Найти аналоги
                                     </a>
@@ -150,8 +162,8 @@
                     <a href="{% url 'drugs:drug_detail' analogue.id %}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">{{ analogue.trade_name }}</h6>
-                            {% if analogue.lowest_price %}
-                            <small class="text-success">{{ analogue.lowest_price }} ₽</small>
+                            {% if analogue.min_price %}
+                            <small class="text-success">{{ analogue.min_price|floatformat:2 }} ₽</small>
                             {% endif %}
                         </div>
                         <small class="text-muted">{{ analogue.mnn }}</small>

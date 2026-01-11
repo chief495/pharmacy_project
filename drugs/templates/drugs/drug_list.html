@@ -77,10 +77,10 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <h5 class="card-title">{{ drug.trade_name }}</h5>
-                    {% if drug.lowest_price %}
-                    <span class="badge bg-success fs-6">{{ drug.lowest_price }} ₽</span>
+                    {% if drug.min_price %}
+                    <span class="badge bg-success fs-6">{{ drug.min_price|floatformat:2 }} ₽</span>
                     {% else %}
-                    <span class="badge bg-danger fs-6">Нет в наличии</span>
+                    <span class="badge bg-secondary fs-6">Нет в наличии</span>
                     {% endif %}
                 </div>
                 
