@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Очистка базы данных{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-exclamation-octagon"></i> Очистка базы данных
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <h5><i class="bi bi-exclamation-triangle-fill"></i> Внимание! Опасная операция!</h5>
+                        <p>Эта операция <strong>полностью удалит все данные</strong> из базы данных:</p>
+                        <ul>
+                            <li>Все препараты и аналоги</li>
+                            <li>Все аптеки и наличие препаратов</li>
+                            <li>Всех пользователей (кроме текущего)</li>
+                            <li>Все подписки</li>
+                        </ul>
+                        <p class="mb-0">Эту операцию нельзя отменить!</p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="confirm" class="form-label">
+                                Введите "УДАЛИТЬ" для подтверждения:
+                            </label>
+                            <input type="text" id="confirm" name="confirm" class="form-control" 
+                                   placeholder="УДАЛИТЬ" required>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg" 
+                                    onclick="return confirm('Вы уверены? Это удалит ВСЕ данные!');">
+                                <i class="bi bi-trash-fill"></i> Очистить базу данных
+                            </button>
+                            <a href="{% url 'drugs:drug_list' %}" class="btn btn-secondary">
+                                Отмена
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

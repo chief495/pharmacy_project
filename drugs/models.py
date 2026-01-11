@@ -12,6 +12,19 @@ class CustomUserManager(BaseUserManager):
         if not email:
             raise ValueError('Email обязателен для регистрации')
         email = self.normalize_email(email)
+        
+        # Генерируем username из email если не указан
+        if 'username' not in extra_fields or not extra_fields['username']:
+            # Используем часть email до @ как username
+            username = email.split('@')[0]
+            # Убедимся, что username уникален
+            base_username = username
+            counter = 1
+            while CustomUser.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+            extra_fields['username'] = username
+        
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -33,6 +46,7 @@ class CustomUserManager(BaseUserManager):
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     """Кастомная модель пользователя с email аутентификацией"""
     email = models.EmailField("Электронная почта", unique=True)
+    username = models.CharField("Имя пользователя", max_length=150, unique=True, blank=True, null=True)
     first_name = models.CharField("Имя", max_length=150, blank=True)
     last_name = models.CharField("Фамилия", max_length=150, blank=True)
     is_staff = models.BooleanField("Сотрудник", default=False)
@@ -43,7 +57,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
     
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['username']  # Важно: добавьте username сюда
     
     class Meta:
         verbose_name = "Пользователь"
@@ -55,7 +69,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     
     def get_full_name(self):
         """Возвращает полное имя пользователя"""
-        return f"{self.first_name} {self.last_name}".strip() or self.email
+        full_name = f"{self.first_name} {self.last_name}".strip()
+        return full_name if full_name else self.email
     
     def get_short_name(self):
         """Возвращает короткое имя пользователя"""
@@ -64,6 +79,30 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def email_user(self, subject, message, from_email=None, **kwargs):
         """Отправляет email пользователю"""
         send_mail(subject, message, from_email, [self.email], **kwargs)
+
+# ... остальные модели остаются без изменений ...
+        
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('Email обязателен для регистрации')
+        email = self.normalize_email(email)
+        
+        # Генерируем username из email если не указан
+        if 'username' not in extra_fields or not extra_fields['username']:
+            # Используем часть email до @ как username
+            username = email.split('@')[0]
+            # Проверка на username уникален
+            base_username = username
+            counter = 1
+            while CustomUser.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+            extra_fields['username'] = username
+        
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
 
 
 class Drug(models.Model):

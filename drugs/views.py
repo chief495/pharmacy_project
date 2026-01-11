@@ -8,6 +8,8 @@ from django.core.mail import send_mail
 from django.conf import settings
 from .models import Drug, Availability, Analogue, UserSubscription, Pharmacy, PharmacyNetwork
 from .forms import UserRegistrationForm, UserLoginForm, SubscriptionForm, SubscriptionEditForm
+from decimal import Decimal
+from datetime import datetime, timedelta
 
 def home(request):
     """Главная страница"""
@@ -132,12 +134,12 @@ def register(request):
         if form.is_valid():
             user = form.save()
             
-            # Явно указываем бэкенд аутентификации
+            # Автоматически логиним пользователя
             user.backend = 'django.contrib.auth.backends.ModelBackend'
-            
             login(request, user)
+            
             messages.success(request, f'Добро пожаловать, {user.get_full_name()}! Регистрация прошла успешно.')
-            return redirect('home')
+            return redirect('drugs:drug_list')  # Используйте правильное имя URL
     else:
         form = UserRegistrationForm()
     
@@ -311,3 +313,192 @@ def send_availability_notifications(drug_id=None):
                 print(f"Error sending email to {subscription.user.email}: {e}")
     
     return notifications_sent
+
+@login_required
+def create_test_data(request):
+    """Создание тестовых данных для демонстрации"""
+    if not request.user.is_staff:
+        messages.error(request, 'Эта функция доступна только администраторам.')
+        return redirect('home')
+    
+    import random
+    from decimal import Decimal
+    from datetime import datetime, timedelta
+    
+    try:
+        # 1. Создаем препараты
+        drugs_data = [
+            {'trade_name': 'Парацетамол', 'mnn': 'Парацетамол', 'form': 'Таблетки', 'dosage': '500 мг', 'manufacturer': 'Фармстандарт'},
+            {'trade_name': 'Ибупрофен', 'mnn': 'Ибупрофен', 'form': 'Таблетки', 'dosage': '200 мг', 'manufacturer': 'Биохимик'},
+            {'trade_name': 'Нурофен', 'mnn': 'Ибупрофен', 'form': 'Таблетки', 'dosage': '200 мг', 'manufacturer': 'Reckitt'},
+            {'trade_name': 'Амоксиклав', 'mnn': 'Амоксициллин', 'form': 'Таблетки', 'dosage': '875 мг', 'manufacturer': 'Sandoz'},
+            {'trade_name': 'Лоратадин', 'mnn': 'Лоратадин', 'form': 'Таблетки', 'dosage': '10 мг', 'manufacturer': 'Озон'},
+            {'trade_name': 'Кларитин', 'mnn': 'Лоратадин', 'form': 'Таблетки', 'dosage': '10 мг', 'manufacturer': 'Bayer'},
+            {'trade_name': 'Эналаприл', 'mnn': 'Эналаприл', 'form': 'Таблетки', 'dosage': '5 мг', 'manufacturer': 'Gedeon Richter'},
+            {'trade_name': 'Метформин', 'mnn': 'Метформин', 'form': 'Таблетки', 'dosage': '850 мг', 'manufacturer': 'Teva'},
+            {'trade_name': 'Омепразол', 'mnn': 'Омепразол', 'form': 'Капсулы', 'dosage': '20 мг', 'manufacturer': 'KRKA'},
+            {'trade_name': 'Аспирин', 'mnn': 'Ацетилсалициловая кислота', 'form': 'Таблетки', 'dosage': '100 мг', 'manufacturer': 'Bayer'},
+        ]
+        
+        drugs = []
+        for data in drugs_data:
+            drug, created = Drug.objects.get_or_create(
+                trade_name=data['trade_name'],
+                defaults=data
+            )
+            drugs.append(drug)
+        
+        # 2. Создаем аналоги
+        analogue_groups = [
+            ['Парацетамол', 'Ибупрофен', 'Нурофен', 'Аспирин'],
+            ['Амоксиклав'],
+            ['Лоратадин', 'Кларитин'],
+            ['Эналаприл'],
+            ['Метформин'],
+            ['Омепразол'],
+        ]
+        
+        for group in analogue_groups:
+            group_drugs = [d for d in drugs if d.trade_name in group]
+            for i in range(len(group_drugs)):
+                for j in range(len(group_drugs)):
+                    if i != j and not Analogue.objects.filter(original=group_drugs[i], analogue=group_drugs[j]).exists():
+                        Analogue.objects.create(
+                            original=group_drugs[i],
+                            analogue=group_drugs[j],
+                            similarity_score=random.uniform(0.7, 0.9)
+                        )
+        
+        # 3. Создаем аптечные сети
+        networks_data = [
+            {'name': 'Аптека 36.6', 'phone': '+7 (800) 555-36-36'},
+            {'name': 'Ригла', 'phone': '+7 (800) 777-03-03'},
+            {'name': 'Самсон-Фарма', 'phone': '+7 (495) 730-53-00'},
+        ]
+        
+        networks = []
+        for net_data in networks_data:
+            network, created = PharmacyNetwork.objects.get_or_create(
+                name=net_data['name'],
+                defaults={'phone': net_data['phone']}
+            )
+            networks.append(network)
+        
+        # 4. Создаем аптеки
+        cities = ['Москва', 'Санкт-Петербург', 'Казань', 'Екатеринбург']
+        pharmacies = []
+        
+        for i in range(10):
+            city = random.choice(cities)
+            network = random.choice(networks)
+            
+            pharmacy, created = Pharmacy.objects.get_or_create(
+                name=f'Аптека {i+1} ({network.name})',
+                city=city,
+                defaults={
+                    'network': network,
+                    'address': f'{city}, ул. Примерная, д. {random.randint(1, 100)}',
+                    'phone': f'+7 (495) {random.randint(100, 999)}-{random.randint(10, 99)}-{random.randint(10, 99)}',
+                    'working_hours': '09:00-21:00'
+                }
+            )
+            pharmacies.append(pharmacy)
+        
+        # 5. Создаем наличие препаратов
+        base_prices = {
+            'Парацетамол': 50, 'Ибупрофен': 80, 'Нурофен': 150,
+            'Амоксиклав': 850, 'Лоратадин': 60, 'Кларитин': 200,
+            'Эналаприл': 120, 'Метформин': 180, 'Омепразол': 160, 'Аспирин': 70
+        }
+        
+        availability_count = 0
+        for pharmacy in pharmacies:
+            for drug in random.sample(drugs, random.randint(3, 7)):
+                base_price = base_prices.get(drug.trade_name, 100)
+                price = Decimal(str(random.randint(int(base_price * 0.8), int(base_price * 1.2))))
+                quantity = random.choice([0, 0, random.randint(1, 20)])  # 33% шанс что нет в наличии
+                
+                availability, created = Availability.objects.get_or_create(
+                    drug=drug,
+                    pharmacy=pharmacy,
+                    defaults={
+                        'price': price,
+                        'quantity': quantity,
+                        'is_available': quantity > 0,
+                        'last_updated': datetime.now() - timedelta(days=random.randint(0, 3))
+                    }
+                )
+                if created:
+                    availability_count += 1
+        
+        # 6. Создаем тестовую подписку для текущего пользователя
+        if drugs:
+            test_drug = random.choice(drugs)
+            UserSubscription.objects.get_or_create(
+                user=request.user,
+                drug=test_drug,
+                defaults={
+                    'city': 'Москва',
+                    'max_price': Decimal('100.00'),
+                    'is_active': True
+                }
+            )
+        
+        messages.success(request, 
+            f'✅ Создано: {len(drugs)} препаратов, {len(pharmacies)} аптек, {availability_count} записей о наличии')
+        
+    except Exception as e:
+        messages.error(request, f'❌ Ошибка: {str(e)}')
+    
+    return redirect('home')
+
+
+@login_required
+def test_notifications(request):
+    """Тест отправки уведомлений"""
+    if not request.user.is_staff:
+        messages.error(request, 'Эта функция доступна только администраторам.')
+        return redirect('home')
+    
+    try:
+        # Создаем тестовое наличие для проверки
+        drug = Drug.objects.first()
+        if drug:
+            # Добавляем наличие для теста
+            moscow_pharmacies = Pharmacy.objects.filter(city='Москва')[:2]
+            for pharmacy in moscow_pharmacies:
+                Availability.objects.get_or_create(
+                    drug=drug,
+                    pharmacy=pharmacy,
+                    defaults={
+                        'price': Decimal('50.00'),
+                        'quantity': 10,
+                        'is_available': True,
+                        'last_updated': datetime.now()
+                    }
+                )
+            
+            # Создаем или обновляем подписку
+            subscription, created = UserSubscription.objects.get_or_create(
+                user=request.user,
+                drug=drug,
+                defaults={
+                    'city': 'Москва',
+                    'max_price': Decimal('100.00'),
+                    'is_active': True
+                }
+            )
+            
+            # Отправляем уведомление
+            notifications_sent = send_availability_notifications(drug.id)
+            
+            if notifications_sent > 0:
+                messages.success(request, f'📧 Тестовое уведомление отправлено на {request.user.email}')
+            else:
+                messages.warning(request, '⚠️ Уведомление не отправлено. Проверьте настройки email.')
+        else:
+            messages.error(request, '❌ Нет препаратов. Сначала создайте тестовые данные.')
+    except Exception as e:
+        messages.error(request, f'❌ Ошибка: {str(e)}')
+    
+    return redirect('home')

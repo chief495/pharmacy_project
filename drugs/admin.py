@@ -9,17 +9,33 @@ from .models import (
 @admin.register(CustomUser)
 class CustomUserAdmin(BaseUserAdmin):
     """Административная панель для кастомной модели пользователя"""
-    list_display = ('email', 'first_name', 'last_name', 'is_staff', 'is_active', 'date_joined', 'email_notifications')
+    list_display = ('email', 'username', 'first_name', 'last_name', 'is_staff', 'is_active', 'date_joined')
     list_filter = ('is_staff', 'is_active', 'email_notifications', 'date_joined')
-    search_fields = ('email', 'first_name', 'last_name')
+    search_fields = ('email', 'first_name', 'last_name', 'username')
     ordering = ('-date_joined',)
     
-    fieldsets = BaseUserAdmin.fieldsets + (
-        ('Дополнительно', {'fields': ('email_notifications',)}),
+    fieldsets = (
+        (None, {'fields': ('email', 'password')}),
+        ('Персональная информация', {'fields': ('username', 'first_name', 'last_name')}),
+        ('Права доступа', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Важные даты', {'fields': ('last_login', 'date_joined')}),
+        ('Уведомления', {'fields': ('email_notifications',)}),
     )
-    add_fieldsets = BaseUserAdmin.add_fieldsets + (
-        ('Дополнительно', {'fields': ('email_notifications',)}),
+    
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'username', 'password1', 'password2', 'first_name', 'last_name', 'email_notifications'),
+        }),
     )
+    
+    readonly_fields = ('last_login', 'date_joined')
+    
+    def save_model(self, request, obj, form, change):
+        """Хэширует пароль при создании пользователя"""
+        if not change:  # Если создается новый пользователь
+            obj.set_password(form.cleaned_data['password1'])
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Drug)

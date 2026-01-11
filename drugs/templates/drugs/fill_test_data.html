@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Заполнение тестовыми данными{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-database-fill-add"></i> Заполнение тестовыми данными
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-info-circle"></i> Что будет создано:</h5>
+                        <ul>
+                            <li>15 препаратов с аналогами</li>
+                            <li>5 аптечных сетей и 20 аптек</li>
+                            <li>Наличие препаратов в аптеках с ценами</li>
+                            <li>3 тестовых пользователя (пароль: password123)</li>
+                            <li>Тестовые подписки пользователей</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Внимание! Эта операция добавит новые данные, но не удалит существующие.
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-play-fill"></i> Заполнить базу данных
+                            </button>
+                            <a href="{% url 'drugs:drug_list' %}" class="btn btn-secondary">
+                                Отмена
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

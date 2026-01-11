@@ -6,13 +6,13 @@ from .models import CustomUser, UserSubscription, Drug
 
 class UserRegistrationForm(forms.ModelForm):
     """Форма регистрации пользователя"""
-    password = forms.CharField(
+    password1 = forms.CharField(
         label='Пароль',
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         min_length=8,
         help_text='Пароль должен содержать минимум 8 символов'
     )
-    password_confirm = forms.CharField(
+    password2 = forms.CharField(
         label='Подтверждение пароля',
         widget=forms.PasswordInput(attrs={'class': 'form-control'})
     )
@@ -39,17 +39,17 @@ class UserRegistrationForm(forms.ModelForm):
     
     def clean(self):
         cleaned_data = super().clean()
-        password = cleaned_data.get('password')
-        password_confirm = cleaned_data.get('password_confirm')
+        password1 = cleaned_data.get('password1')
+        password2 = cleaned_data.get('password2')
         
-        if password and password_confirm and password != password_confirm:
-            raise ValidationError({'password_confirm': 'Пароли не совпадают'})
+        if password1 and password2 and password1 != password2:
+            raise ValidationError({'password2': 'Пароли не совпадают'})
         
         return cleaned_data
     
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.set_password(self.cleaned_data['password'])
+        user.set_password(self.cleaned_data['password1'])
         if commit:
             user.save()
         return user
@@ -69,6 +69,8 @@ class UserLoginForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['username'].label = 'Электронная почта'
+
+# ... остальные формы остаются без изменений ...
     
     def clean_username(self):
         username = self.cleaned_data.get('username')
