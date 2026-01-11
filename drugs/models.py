@@ -1,5 +1,69 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.core.mail import send_mail
+from django.conf import settings
+
+
+class CustomUserManager(BaseUserManager):
+    """Кастомный менеджер для модели пользователя с email аутентификацией"""
+    
+    def create_user(self, email, password=None, **extra_fields):
+        """Создание обычного пользователя"""
+        if not email:
+            raise ValueError('Email обязателен для регистрации')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+    
+    def create_superuser(self, email, password=None, **extra_fields):
+        """Создание суперпользователя"""
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+        
+        return self.create_user(email, password, **extra_fields)
+
+
+class CustomUser(AbstractBaseUser, PermissionsMixin):
+    """Кастомная модель пользователя с email аутентификацией"""
+    email = models.EmailField("Электронная почта", unique=True)
+    first_name = models.CharField("Имя", max_length=150, blank=True)
+    last_name = models.CharField("Фамилия", max_length=150, blank=True)
+    is_staff = models.BooleanField("Сотрудник", default=False)
+    is_active = models.BooleanField("Активен", default=True)
+    date_joined = models.DateTimeField("Дата регистрации", auto_now_add=True)
+    email_notifications = models.BooleanField("Email уведомления", default=True)
+    
+    objects = CustomUserManager()
+    
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+    
+    class Meta:
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
+    
+    def __str__(self):
+        return self.email
+    
+    def get_full_name(self):
+        """Возвращает полное имя пользователя"""
+        return f"{self.first_name} {self.last_name}".strip() or self.email
+    
+    def get_short_name(self):
+        """Возвращает короткое имя пользователя"""
+        return self.first_name or self.email
+    
+    def email_user(self, subject, message, from_email=None, **kwargs):
+        """Отправляет email пользователю"""
+        send_mail(subject, message, from_email, [self.email], **kwargs)
+
 
 class Drug(models.Model):
     """Модель препарата"""
@@ -102,7 +166,7 @@ class PriceHistory(models.Model):
 
 class UserSubscription(models.Model):
     """Модель подписки пользователя на препарат"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Пользователь")
     drug = models.ForeignKey(Drug, on_delete=models.CASCADE, verbose_name="Препарат")
     city = models.CharField("Город", max_length=100, blank=True, null=True)
     max_price = models.DecimalField("Максимальная цена", max_digits=10, decimal_places=2, blank=True, null=True)
