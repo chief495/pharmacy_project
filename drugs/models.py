@@ -48,6 +48,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     class Meta:
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи"
+        db_table = 'custom_user'  # Явно указываем имя таблицы
     
     def __str__(self):
         return self.email
