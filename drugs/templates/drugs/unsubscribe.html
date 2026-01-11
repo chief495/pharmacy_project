@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Отписка - PharmaMonitor{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-sm border-danger">
+            <div class="card-body p-4">
+                <h2 class="card-title text-center mb-4 text-danger">
+                    <i class="bi bi-exclamation-triangle"></i> Отписка
+                </h2>
+                
+                <div class="alert alert-warning">
+                    <strong>Внимание!</strong> Вы уверены, что хотите отписаться от уведомлений о препарате
+                    <strong>{{ subscription.drug.trade_name }}</strong>?
+                </div>
+                
+                <p class="text-muted">
+                    После отписки вы больше не будете получать уведомления о наличии этого препарата.
+                </p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="bi bi-trash"></i> Да, отписаться
+                        </button>
+                        <a href="{% url 'drugs:my_subscriptions' %}" class="btn btn-outline-secondary">
+                            Отмена
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
