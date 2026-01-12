@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-ALLOWED_HOSTS = ['eduardnesterov.pythonanywhere.com', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -110,7 +110,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['eduardnesterov.pythonanywhere.com', '127.0.0.1']
 
 # Язык и время
 LANGUAGE_CODE = 'ru-ru'
@@ -123,14 +123,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-# Создаем список STATICFILES_DIRS только если директория существует
-static_dirs = []
-static_dir = os.path.join(BASE_DIR, 'static')
-if os.path.exists(static_dir):
-    static_dirs.append(static_dir)
-STATICFILES_DIRS = static_dirs
+# Эта папка создастся автоматически при команде collectstatic
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Media files
 MEDIA_URL = '/media/'
@@ -140,9 +134,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Эта папка создастся автоматически при команде collectstatic
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 LOGGING = {
     'version': 1,
