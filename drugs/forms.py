@@ -70,7 +70,6 @@ class UserLoginForm(AuthenticationForm):
         super().__init__(*args, **kwargs)
         self.fields['username'].label = 'Электронная почта'
 
-# ... остальные формы остаются без изменений ...
     
     def clean_username(self):
         username = self.cleaned_data.get('username')

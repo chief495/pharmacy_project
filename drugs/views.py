@@ -10,6 +10,8 @@ from .models import Drug, Availability, Analogue, UserSubscription, Pharmacy, Ph
 from .forms import UserRegistrationForm, UserLoginForm, SubscriptionForm, SubscriptionEditForm
 from decimal import Decimal
 from datetime import datetime, timedelta
+from random import random
+import logging
 
 def home(request):
     """Главная страница"""
@@ -126,20 +128,35 @@ def drug_search(request):
         'query': query,
     })
 
+logger = logging.getLogger(__name__)
 
 def register(request):
     """Регистрация нового пользователя"""
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
+        logger.debug(f'Данные формы: {request.POST}')
+        logger.debug(f'Форма валидна: {form.is_valid()}')
+        logger.debug(f'Ошибки формы: {form.errors}')
+        
         if form.is_valid():
-            user = form.save()
-            
-            # Автоматически логиним пользователя
-            user.backend = 'django.contrib.auth.backends.ModelBackend'
-            login(request, user)
-            
-            messages.success(request, f'Добро пожаловать, {user.get_full_name()}! Регистрация прошла успешно.')
-            return redirect('drugs:drug_list')  # Используйте правильное имя URL
+            try:
+                user = form.save()
+                logger.info(f'Пользователь создан: {user.email}')
+                
+                # Автоматически логиним пользователя
+                user.backend = 'django.contrib.auth.backends.ModelBackend'
+                login(request, user)
+                
+                messages.success(request, f'Добро пожаловать, {user.get_full_name()}! Регистрация прошла успешно.')
+                return redirect('drugs:drug_list')
+            except Exception as e:
+                logger.error(f'Ошибка при создании пользователя: {e}')
+                messages.error(request, f'Произошла ошибка при регистрации: {e}')
+        else:
+            # Показываем ошибки пользователю
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
     else:
         form = UserRegistrationForm()
     
@@ -159,6 +176,9 @@ def user_login(request):
             messages.success(request, f'Добро пожаловать, {user.get_full_name()}!')
             next_url = request.GET.get('next', 'home')
             return redirect(next_url)
+        else:
+            # Добавляем сообщение об ошибке
+            messages.error(request, 'Неверный email или пароль. Попробуйте еще раз.')
     else:
         form = UserLoginForm()
     
@@ -196,7 +216,7 @@ def subscribe(request, drug_id=None):
             subscription.user = request.user
             subscription.save()
             messages.success(request, f'Вы подписались на уведомления о препарате {subscription.drug.trade_name}.')
-            return redirect('my_subscriptions')
+            return redirect('drugs:my_subscriptions')
     else:
         initial = {}
         if drug:
@@ -208,17 +228,18 @@ def subscribe(request, drug_id=None):
         'drug': drug,
     })
 
-
 @login_required
 def unsubscribe(request, subscription_id):
     """Удаление подписки"""
     subscription = get_object_or_404(UserSubscription, id=subscription_id, user=request.user)
+    
     if request.method == 'POST':
         drug_name = subscription.drug.trade_name
         subscription.delete()
         messages.success(request, f'Вы отписались от уведомлений о препарате {drug_name}.')
-        return redirect('my_subscriptions')
+        return redirect('drugs:my_subscriptions')
     
+    # GET запрос - показываем страницу подтверждения
     return render(request, 'drugs/unsubscribe.html', {'subscription': subscription})
 
 
@@ -232,7 +253,7 @@ def edit_subscription(request, subscription_id):
         if form.is_valid():
             form.save()
             messages.success(request, 'Подписка обновлена.')
-            return redirect('my_subscriptions')
+            return redirect('drugs:my_subscriptions')
     else:
         form = SubscriptionEditForm(instance=subscription)
     
@@ -320,10 +341,6 @@ def create_test_data(request):
     if not request.user.is_staff:
         messages.error(request, 'Эта функция доступна только администраторам.')
         return redirect('home')
-    
-    import random
-    from decimal import Decimal
-    from datetime import datetime, timedelta
     
     try:
         # 1. Создаем препараты
@@ -447,57 +464,6 @@ def create_test_data(request):
         messages.success(request, 
             f'✅ Создано: {len(drugs)} препаратов, {len(pharmacies)} аптек, {availability_count} записей о наличии')
         
-    except Exception as e:
-        messages.error(request, f'❌ Ошибка: {str(e)}')
-    
-    return redirect('home')
-
-
-@login_required
-def test_notifications(request):
-    """Тест отправки уведомлений"""
-    if not request.user.is_staff:
-        messages.error(request, 'Эта функция доступна только администраторам.')
-        return redirect('home')
-    
-    try:
-        # Создаем тестовое наличие для проверки
-        drug = Drug.objects.first()
-        if drug:
-            # Добавляем наличие для теста
-            moscow_pharmacies = Pharmacy.objects.filter(city='Москва')[:2]
-            for pharmacy in moscow_pharmacies:
-                Availability.objects.get_or_create(
-                    drug=drug,
-                    pharmacy=pharmacy,
-                    defaults={
-                        'price': Decimal('50.00'),
-                        'quantity': 10,
-                        'is_available': True,
-                        'last_updated': datetime.now()
-                    }
-                )
-            
-            # Создаем или обновляем подписку
-            subscription, created = UserSubscription.objects.get_or_create(
-                user=request.user,
-                drug=drug,
-                defaults={
-                    'city': 'Москва',
-                    'max_price': Decimal('100.00'),
-                    'is_active': True
-                }
-            )
-            
-            # Отправляем уведомление
-            notifications_sent = send_availability_notifications(drug.id)
-            
-            if notifications_sent > 0:
-                messages.success(request, f'📧 Тестовое уведомление отправлено на {request.user.email}')
-            else:
-                messages.warning(request, '⚠️ Уведомление не отправлено. Проверьте настройки email.')
-        else:
-            messages.error(request, '❌ Нет препаратов. Сначала создайте тестовые данные.')
     except Exception as e:
         messages.error(request, f'❌ Ошибка: {str(e)}')
     
