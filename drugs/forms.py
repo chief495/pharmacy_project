@@ -1,7 +1,8 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
-from .models import CustomUser, UserSubscription, Drug
+from .models import CustomUser, UserSubscription, Drug, Pharmacy
+from decimal import Decimal
 
 
 class UserRegistrationForm(forms.ModelForm):
@@ -69,7 +70,6 @@ class UserLoginForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['username'].label = 'Электронная почта'
-
     
     def clean_username(self):
         username = self.cleaned_data.get('username')
@@ -84,14 +84,35 @@ class SubscriptionForm(forms.ModelForm):
         fields = ['drug', 'city', 'max_price']
         widgets = {
             'drug': forms.Select(attrs={'class': 'form-select'}),
-            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Город (необязательно)'}),
-            'max_price': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Максимальная цена (необязательно)', 'step': '0.01'}),
+            'city': forms.Select(attrs={'class': 'form-select'}),
+            'max_price': forms.NumberInput(attrs={
+                'class': 'form-control', 
+                'placeholder': 'Максимальная цена (необязательно)',
+                'min': '0',
+                'step': '1'  # Шаг 1 рубль
+            }),
         }
         labels = {
             'drug': 'Препарат',
             'city': 'Город',
             'max_price': 'Максимальная цена (руб.)',
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Получаем уникальные города из базы данных
+        cities = Pharmacy.objects.values_list('city', flat=True).distinct().order_by('city')
+        city_choices = [('', 'Все города')] + [(city, city) for city in cities if city]
+        self.fields['city'].widget.choices = city_choices
+        
+        # Настраиваем поле цены
+        self.fields['max_price'].widget.attrs['step'] = '1'
+        
+    def clean_max_price(self):
+        max_price = self.cleaned_data.get('max_price')
+        if max_price is not None and max_price <= 0:
+            raise ValidationError('Цена должна быть положительной')
+        return max_price
 
 
 class SubscriptionEditForm(forms.ModelForm):
@@ -101,8 +122,12 @@ class SubscriptionEditForm(forms.ModelForm):
         model = UserSubscription
         fields = ['city', 'max_price', 'is_active']
         widgets = {
-            'city': forms.TextInput(attrs={'class': 'form-control'}),
-            'max_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'city': forms.Select(attrs={'class': 'form-select'}),
+            'max_price': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '0',
+                'step': '1'  # Шаг 1 рубль
+            }),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         labels = {
@@ -110,3 +135,19 @@ class SubscriptionEditForm(forms.ModelForm):
             'max_price': 'Максимальная цена (руб.)',
             'is_active': 'Активна',
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Получаем уникальные города из базы данных
+        cities = Pharmacy.objects.values_list('city', flat=True).distinct().order_by('city')
+        city_choices = [('', 'Все города')] + [(city, city) for city in cities if city]
+        self.fields['city'].widget.choices = city_choices
+        
+        # Настраиваем поле цены
+        self.fields['max_price'].widget.attrs['step'] = '1'
+        
+    def clean_max_price(self):
+        max_price = self.cleaned_data.get('max_price')
+        if max_price is not None and max_price <= 0:
+            raise ValidationError('Цена должна быть положительной')
+        return max_price

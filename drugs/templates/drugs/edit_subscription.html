@@ -7,12 +7,22 @@
     <div class="col-md-8 col-lg-6">
         <div class="card shadow-sm">
             <div class="card-body p-4">
-                <h2 class="card-title mb-4">
+                <h2 class="card-title text-center mb-4">
                     <i class="bi bi-pencil text-primary"></i> Редактирование подписки
                 </h2>
                 
-                <div class="alert alert-info mb-3">
-                    <strong>Препарат:</strong> {{ subscription.drug.trade_name }} ({{ subscription.drug.mnn }})
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-info-circle"></i> 
+                    <strong>После сохранения изменений</strong> система проверит наличие препарата 
+                    по новым критериям и отправит уведомление, если он есть в наличии.
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Препарат: {{ subscription.drug.trade_name }}</h5>
+                        <p class="mb-1"><strong>МНН:</strong> {{ subscription.drug.mnn }}</p>
+                        <p class="mb-0"><strong>Производитель:</strong> {{ subscription.drug.manufacturer }}</p>
+                    </div>
                 </div>
                 
                 <form method="post">
@@ -20,38 +30,51 @@
                     
                     {% if form.non_field_errors %}
                         <div class="alert alert-danger">
-                            {{ form.non_field_errors }}
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
                         </div>
                     {% endif %}
                     
                     <div class="mb-3">
-                        <label for="{{ form.city.id_for_label }}" class="form-label">
-                            {{ form.city.label }}
-                        </label>
+                        <label for="id_city" class="form-label">Город</label>
                         {{ form.city }}
+                        <small class="text-muted">Оставьте пустым для получения уведомлений из всех городов</small>
                         {% if form.city.errors %}
-                            <div class="text-danger small mt-1">{{ form.city.errors }}</div>
+                            <div class="text-danger small mt-1">
+                                {% for error in form.city.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
                         {% endif %}
                     </div>
                     
                     <div class="mb-3">
-                        <label for="{{ form.max_price.id_for_label }}" class="form-label">
-                            {{ form.max_price.label }}
-                        </label>
-                        {{ form.max_price }}
+                        <label for="id_max_price" class="form-label">Максимальная цена (руб.)</label>
+                        <div class="input-group">
+                            {{ form.max_price }}
+                            <span class="input-group-text">руб.</span>
+                        </div>
+                        <small class="text-muted">Оставьте пустым для получения уведомлений по любой цене</small>
                         {% if form.max_price.errors %}
-                            <div class="text-danger small mt-1">{{ form.max_price.errors }}</div>
+                            <div class="text-danger small mt-1">
+                                {% for error in form.max_price.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
                         {% endif %}
                     </div>
                     
-                    <div class="mb-3 form-check">
-                        {{ form.is_active }}
-                        <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
-                            {{ form.is_active.label }}
-                        </label>
-                        {% if form.is_active.errors %}
-                            <div class="text-danger small mt-1">{{ form.is_active.errors }}</div>
-                        {% endif %}
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            {{ form.is_active }}
+                            <label class="form-check-label" for="id_is_active">
+                                <strong>Активная подписка</strong>
+                            </label>
+                        </div>
+                        <small class="text-muted">
+                            Отключите, если не хотите получать уведомления об этом препарате
+                        </small>
                     </div>
                     
                     <div class="d-grid gap-2">

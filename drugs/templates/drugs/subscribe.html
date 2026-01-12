@@ -1,78 +1,112 @@
 {% extends 'base.html' %}
 
-{% block title %}Подписка на уведомления - PharmaMonitor{% endblock %}
+{% block title %}Подписка на препарат - PharmaMonitor{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8 col-lg-6">
         <div class="card shadow-sm">
             <div class="card-body p-4">
-                <h2 class="card-title mb-4">
-                    <i class="bi bi-bell-plus text-primary"></i> 
-                    {% if drug %}
-                        Подписка на {{ drug.trade_name }}
-                    {% else %}
-                        Новая подписка
-                    {% endif %}
+                <h2 class="card-title text-center mb-4">
+                    <i class="bi bi-bell text-primary"></i> 
+                    {% if drug %}Подписка на {{ drug.trade_name }}{% else %}Новая подписка{% endif %}
                 </h2>
+                
+                <div class="alert alert-success">
+                    <i class="bi bi-lightning-charge"></i> 
+                    <strong>Мгновенное уведомление!</strong> Если препарат уже есть в наличии по вашим критериям, 
+                    вы получите письмо сразу после подписки.
+                </div>
                 
                 <form method="post">
                     {% csrf_token %}
                     
                     {% if form.non_field_errors %}
                         <div class="alert alert-danger">
-                            {{ form.non_field_errors }}
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
                         </div>
                     {% endif %}
                     
                     <div class="mb-3">
-                        <label for="{{ form.drug.id_for_label }}" class="form-label">
-                            {{ form.drug.label }}
-                        </label>
+                        <label for="id_drug" class="form-label">Препарат *</label>
                         {{ form.drug }}
                         {% if form.drug.errors %}
-                            <div class="text-danger small mt-1">{{ form.drug.errors }}</div>
-                        {% endif %}
-                        {% if form.drug.help_text %}
-                            <small class="form-text text-muted">{{ form.drug.help_text }}</small>
+                            <div class="text-danger small mt-1">
+                                {% for error in form.drug.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
                         {% endif %}
                     </div>
                     
                     <div class="mb-3">
-                        <label for="{{ form.city.id_for_label }}" class="form-label">
-                            {{ form.city.label }}
-                        </label>
+                        <label for="id_city" class="form-label">Город</label>
                         {{ form.city }}
+                        <small class="text-muted">
+                            {% if form.city.field.choices|length > 1 %}
+                                Выберите город или оставьте "Все города"
+                            {% else %}
+                                В базе пока нет аптек с указанным городом
+                            {% endif %}
+                        </small>
                         {% if form.city.errors %}
-                            <div class="text-danger small mt-1">{{ form.city.errors }}</div>
-                        {% endif %}
-                        {% if form.city.help_text %}
-                            <small class="form-text text-muted">{{ form.city.help_text }}</small>
+                            <div class="text-danger small mt-1">
+                                {% for error in form.city.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
                         {% endif %}
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="{{ form.max_price.id_for_label }}" class="form-label">
-                            {{ form.max_price.label }}
-                        </label>
-                        {{ form.max_price }}
+                    <div class="mb-4">
+                        <label for="id_max_price" class="form-label">Максимальная цена (руб.)</label>
+                        <div class="input-group">
+                            {{ form.max_price }}
+                            <span class="input-group-text">руб.</span>
+                        </div>
+                        <small class="text-muted">Оставьте пустым для получения уведомлений по любой цене</small>
                         {% if form.max_price.errors %}
-                            <div class="text-danger small mt-1">{{ form.max_price.errors }}</div>
-                        {% endif %}
-                        {% if form.max_price.help_text %}
-                            <small class="form-text text-muted">{{ form.max_price.help_text }}</small>
+                            <div class="text-danger small mt-1">
+                                {% for error in form.max_price.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
                         {% endif %}
                     </div>
                     
                     <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="bi bi-check-circle"></i> Подписаться
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-bell-fill"></i> Подписаться на уведомления
                         </button>
-                        <a href="{% url 'drugs:my_subscriptions' %}" class="btn btn-outline-secondary">
+                        <a href="{% if drug %}{% url 'drugs:drug_detail' drug.id %}{% else %}{% url 'drugs:my_subscriptions' %}{% endif %}" 
+                           class="btn btn-outline-secondary">
                             Отмена
                         </a>
                     </div>
                 </form>
+                
+                {% if drug %}
+                <hr class="my-4">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h5 class="card-title">Текущая информация о препарате</h5>
+                        
+                        {% if drug.min_price %}
+                            <p class="text-success mb-2">
+                                <i class="bi bi-check-circle"></i> Препарат есть в наличии!
+                            </p>
+                            <p class="mb-1">Минимальная цена: <strong>{{ drug.min_price }} руб.</strong></p>
+                            <p class="mb-0">Доступен в {{ drug.pharmacy_count|default:"нескольких" }} аптеках</p>
+                        {% else %}
+                            <p class="text-warning mb-0">
+                                <i class="bi bi-exclamation-triangle"></i> В данный момент нет в наличии
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
