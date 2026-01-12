@@ -216,6 +216,7 @@ def my_subscriptions(request):
 def subscribe(request, drug_id=None):
     """Создание подписки на препарат с немедленной отправкой уведомления если есть в наличии"""
     drug = None
+    
     if drug_id:
         drug = get_object_or_404(Drug, id=drug_id)
     
@@ -255,7 +256,11 @@ def subscribe(request, drug_id=None):
     })
     
 def send_immediate_notification(subscription):
-    """Немедленная отправка уведомления если препарат есть в наличии"""
+    """Немедленная отправка уведомления если препарат есть в наличии по фильтрам"""
+    from django.core.mail import send_mail
+    from django.conf import settings
+    import logging
+    
     logger = logging.getLogger(__name__)
     
     try:
@@ -271,18 +276,33 @@ def send_immediate_notification(subscription):
         if subscription.max_price:
             availabilities_query = availabilities_query.filter(price__lte=subscription.max_price)
         
-        availabilities = list(availabilities_query.order_by('price')[:5])  # Топ 5 самых дешевых
+        availabilities = list(availabilities_query.order_by('price')[:10])  # Топ 10 самых дешевых
         
         if availabilities:
-            # Формируем сообщение о СРАЗУ доступном препарате
-            subject = f'✅ Препарат {subscription.drug.trade_name} уже в наличии!'
+            # Формируем заголовок в зависимости от фильтров
+            if subscription.city:
+                subject = f'✅ {subscription.drug.trade_name} в наличии в {subscription.city}!'
+            else:
+                subject = f'✅ {subscription.drug.trade_name} уже в наличии!'
             
             message_lines = [
                 f'Здравствуйте, {subscription.user.get_full_name()}!',
                 '',
-                f'Отличные новости! Препарат {subscription.drug.trade_name} ({subscription.drug.mnn}) уже доступен в аптеках:',
+                f'Препарат {subscription.drug.trade_name} ({subscription.drug.mnn}) доступен:',
                 '',
             ]
+            
+            # Добавляем информацию о фильтрах
+            if subscription.city or subscription.max_price:
+                message_lines.append('По вашим критериям:')
+                if subscription.city:
+                    message_lines.append(f'• Город: {subscription.city}')
+                if subscription.max_price:
+                    message_lines.append(f'• Максимальная цена: до {subscription.max_price} руб.')
+                message_lines.append('')
+            
+            message_lines.append('Найдены следующие предложения:')
+            message_lines.append('')
             
             for avail in availabilities:
                 message_lines.append(f'🏥 {avail.pharmacy.name}')
@@ -298,6 +318,7 @@ def send_immediate_notification(subscription):
             message_lines.append('---')
             message_lines.append('Это автоматическое уведомление о текущем наличии.')
             message_lines.append('Вы будете получать уведомления при появлении новых поступлений.')
+            message_lines.append('Чтобы изменить параметры подписки, перейдите в "Мои подписки".')
             
             message = '\n'.join(message_lines)
             
@@ -314,7 +335,13 @@ def send_immediate_notification(subscription):
             return True
         
         else:
-            logger.info(f'Нет текущего наличия для {subscription.user.email} о {subscription.drug.trade_name}')
+            # Записываем почему не отправили
+            reason = "нет в наличии"
+            if subscription.city:
+                reason = f"нет в городе {subscription.city}"
+            if subscription.max_price:
+                reason = f"нет по цене до {subscription.max_price} руб."
+            logger.info(f'Нет текущего наличия для {subscription.user.email} о {subscription.drug.trade_name} ({reason})')
             return False
             
     except Exception as e:
@@ -367,6 +394,27 @@ def edit_subscription(request, subscription_id):
         'subscription': subscription,
     })
 
+@login_required
+def check_my_subscriptions(request):
+    """Проверяет наличие для всех подписок пользователя"""
+    subscriptions = UserSubscription.objects.filter(
+        user=request.user,
+        is_active=True
+    ).select_related('drug')
+    
+    notifications_sent = 0
+    
+    for subscription in subscriptions:
+        # Используем вашу существующую функцию
+        if send_immediate_notification(subscription):
+            notifications_sent += 1
+    
+    if notifications_sent > 0:
+        messages.success(request, f'✅ Проверка завершена. Отправлено {notifications_sent} уведомлений.')
+    else:
+        messages.info(request, 'ℹ️ Для ваших подписок нет новых предложений.')
+    
+    return redirect('drugs:my_subscriptions')
 
 def send_availability_notifications(drug_id=None):
     """

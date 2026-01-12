@@ -19,4 +19,5 @@ urlpatterns = [
     path('subscribe/<int:drug_id>/', views.subscribe, name='subscribe_drug'),
     path('subscriptions/<int:subscription_id>/edit/', views.edit_subscription, name='edit_subscription'),
     path('subscriptions/<int:subscription_id>/unsubscribe/', views.unsubscribe, name='unsubscribe'),
+    path('subscriptions/check/', views.check_my_subscriptions, name='check_subscriptions'),
 ]

@@ -14,8 +14,8 @@
                 
                 <div class="alert alert-success">
                     <i class="bi bi-lightning-charge"></i> 
-                    <strong>Мгновенное уведомление!</strong> Если препарат уже есть в наличии по вашим критериям, 
-                    вы получите письмо сразу после подписки.
+                    <strong>Мгновенное уведомление!</strong> После подписки система проверит наличие по вашим критериям 
+                    и сразу отправит список аптек на email.
                 </div>
                 
                 <form method="post">
@@ -46,7 +46,7 @@
                         {{ form.city }}
                         <small class="text-muted">
                             {% if form.city.field.choices|length > 1 %}
-                                Выберите город или оставьте "Все города"
+                                Выберите город для уведомлений только из этого города
                             {% else %}
                                 В базе пока нет аптек с указанным городом
                             {% endif %}
@@ -91,19 +91,10 @@
                 <hr class="my-4">
                 <div class="card bg-light">
                     <div class="card-body">
-                        <h5 class="card-title">Текущая информация о препарате</h5>
-                        
-                        {% if drug.min_price %}
-                            <p class="text-success mb-2">
-                                <i class="bi bi-check-circle"></i> Препарат есть в наличии!
-                            </p>
-                            <p class="mb-1">Минимальная цена: <strong>{{ drug.min_price }} руб.</strong></p>
-                            <p class="mb-0">Доступен в {{ drug.pharmacy_count|default:"нескольких" }} аптеках</p>
-                        {% else %}
-                            <p class="text-warning mb-0">
-                                <i class="bi bi-exclamation-triangle"></i> В данный момент нет в наличии
-                            </p>
-                        {% endif %}
+                        <h5 class="card-title">Информация о препарате</h5>
+                        <p class="mb-1"><strong>Название:</strong> {{ drug.trade_name }}</p>
+                        <p class="mb-1"><strong>МНН:</strong> {{ drug.mnn }}</p>
+                        <p class="mb-0"><strong>Производитель:</strong> {{ drug.manufacturer }}</p>
                     </div>
                 </div>
                 {% endif %}
