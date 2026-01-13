@@ -1,0 +1,17 @@
+[project]
+name = "pharmacy-project"
+version = "0.1.0"
+authors = [{ name = "Нестеров Эдуард"}]
+description = "Система мониторинга наличия лекарств в аптечных сетях для пациентов с целью прогнозирования дефицита и поиска аналогов"
+readme = "README.md"
+requires-python = ">=3.13,<4.0"
+classifiers = [
+	"Framework :: Django",
+	"Framework :: Django :: 5.2",
+	"Programming Language :: Python :: 3.13",
+]
+dependencies = [
+	"django>=5.2",
+	"python-decouple>=3.8"
+	
+]

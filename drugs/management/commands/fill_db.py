@@ -16,27 +16,26 @@ class Command(BaseCommand):
     
     def handle(self, *args, **options):
         self.stdout.write(self.style.SUCCESS('Начинаем заполнение базы данных...'))
-        
-        # Очищаем старые данные (осторожно!)
+        # Очистка существующих данных (если необходимо)
         # Drug.objects.all().delete()
         # Pharmacy.objects.all().delete()
         
-        # 1. Создаем тестовых пользователей
+        # Создаем тестовых пользователей
         self.create_users()
         
-        # 2. Создаем препараты
+        # Создаем препараты
         drugs = self.create_drugs()
         
-        # 3. Создаем аналоги
+        # Создаем аналоги
         self.create_analogues(drugs)
         
-        # 4. Создаем аптечные сети и аптеки
+        # Создаем аптечные сети и аптеки
         pharmacies = self.create_pharmacies()
         
-        # 5. Создаем наличие препаратов в аптеках
+        # Создаем наличие препаратов в аптеках
         self.create_availabilities(drugs, pharmacies)
         
-        # 6. Создаем подписки
+        # Создаем подписки
         self.create_subscriptions(drugs)
         
         self.stdout.write(self.style.SUCCESS('База данных успешно заполнена!'))

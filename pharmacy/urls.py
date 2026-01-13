@@ -13,7 +13,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
     # Подключаем URL из приложения drugs (включая аутентификацию)
-    path('drugs/', include('drugs.urls')),
+    path('drugs/', include('drugs.urls', namespace='drugs')),
+    
+    # Аутентификация
+    path('accounts/', include('drugs.urls')),
     
     # Аутентификация (для совместимости с LOGIN_URL='login')
     path('accounts/login/', views.user_login, name='login'),

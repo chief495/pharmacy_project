@@ -79,8 +79,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def email_user(self, subject, message, from_email=None, **kwargs):
         """Отправляет email пользователю"""
         send_mail(subject, message, from_email, [self.email], **kwargs)
-
-# ... остальные модели остаются без изменений ...
         
     def create_user(self, email, password=None, **extra_fields):
         if not email:
