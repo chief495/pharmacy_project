@@ -37,12 +37,6 @@
         .navbar {
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .admin-tools {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -77,23 +71,6 @@
                             <i class="bi bi-search"></i> Поиск
                         </a>
                     </li>
-                    
-                    {% if user.is_staff %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" 
-                           data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-tools text-warning"></i> Админ
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'drugs:create_test_data' %}">
-                                <i class="bi bi-database-add"></i> Заполнить тестовыми данными
-                            </a></li>
-                            <li><a class="dropdown-item" href="{% url 'admin:index' %}">
-                                <i class="bi bi-gear"></i> Админ-панель
-                            </a></li>
-                        </ul>
-                    </li>
-                    {% endif %}
                 </ul>
                 
                 <form class="d-flex me-3" method="get" action="{% url 'drugs:drug_search' %}">
@@ -154,32 +131,6 @@
         <!-- Контент страницы будет здесь -->
         {% endblock %}
     </main>
-
-    <!-- Кнопка быстрого доступа для администратора (плавающая) -->
-    {% if user.is_staff and request.path == '/' %}
-    <div class="admin-tools">
-        <div class="dropdown">
-            <button class="btn btn-warning btn-lg rounded-circle shadow-lg" 
-                    type="button" data-bs-toggle="dropdown" 
-                    aria-expanded="false" style="width: 60px; height: 60px;">
-                <i class="bi bi-tools fs-5"></i>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><h6 class="dropdown-header">Быстрые действия</h6></li>
-                <li><a class="dropdown-item" href="{% url 'drugs:create_test_data' %}">
-                    <i class="bi bi-database-add"></i> Заполнить тестовыми данными
-                </a></li>
-                <li><a class="dropdown-item" href="{% url 'admin:index' %}">
-                    <i class="bi bi-gear"></i> Админ-панель
-                </a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="{% url 'drugs:test_notifications' %}">
-                    <i class="bi bi-envelope"></i> Тест уведомлений
-                </a></li>
-            </ul>
-        </div>
-    </div>
-    {% endif %}
 
     <!-- Футер -->
     <footer class="mt-5">
