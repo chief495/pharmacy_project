@@ -124,7 +124,7 @@ STATICFILES_DIRS = [
 ]
 
 # Папка, куда собираются ВСЕ статические файлы (включая админку)
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")  # ИЗМЕНИТЕ НА staticfiles!
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Media files
 MEDIA_URL = "/media/"
