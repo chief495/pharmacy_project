@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from decouple import config
 
-# Используйте config() для получения значений:
+
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="").split(",")
@@ -10,7 +10,7 @@ CSRF_TRUSTED_ORIGINS = [
     f"https://{ALLOWED_HOSTS[0]}",
     f"http://{ALLOWED_HOSTS[0]}",
 ]
-# Добавьте localhost при DEBUG
+
 if DEBUG:
     ALLOWED_HOSTS.extend(['localhost', '127.0.0.1'])
 
@@ -50,7 +50,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "django.template.context_processors.static",  # Добавьте эту строку!
+                "django.template.context_processors.static",  
             ],
         },
     },
@@ -75,8 +75,7 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",  # Стандартный backend (для админки)
 ]
 
-# Authentication URLs - ИСПРАВЬТЕ с namespace
-LOGIN_URL = "drugs:login"  # Добавьте namespace!
+LOGIN_URL = "drugs:login" 
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "home"
 
@@ -115,16 +114,14 @@ TIME_ZONE = "Europe/Moscow"
 USE_I18N = True
 USE_TZ = True
 
-# Static files - ИСПРАВЬТЕ ЭТО!
 STATIC_URL = "/static/"
 
-# Ваши исходные статические файлы
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),  # Ваши файлы здесь
+    os.path.join(BASE_DIR, "static"), 
 ]
 
 # Папка, куда собираются ВСЕ статические файлы (включая админку)
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Media files
 MEDIA_URL = "/media/"
@@ -147,7 +144,6 @@ LOGGING = {
     },
 }
 
-# Временно отключите security settings для разработки
 if DEBUG:
     SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = False
